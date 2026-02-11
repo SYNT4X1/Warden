@@ -1,32 +1,37 @@
 #!/usr/bin/env sh
 
-# Change Password
+# LIBRARY IMPORTS
+. /var/lib/warden/utilities/auth  # Used for password authentication/administration
 
-. /var/lib/warden/utilities/auth
-. /var/lib/warden/utilities/log
 
+# Print script help banner
 help () {
 	cat "/var/lib/warden/banners/wcfg.banner"	
 }
 
+
+# Prints script usage banner for help
+# banner and on failed command usage
 usage () {
-    echo "usage: wcfg --change-password"
-	echo "usage: wcfg --l ip 127.0.0.1"
-	echo "usage: wcfg --lock user username"
-	echo
-	echo "usage: wcfg --lock-enable ip 127.0.0.1"
-	echo "usage: wcfg -le user username"
-	echo
-	echo "usage: wcfg --lock-disable ip 127.0.0.1"
-	echo "usage: wcfg --ld user username"
+    printf "%s\n" "usage: wcfg --change-password"
+	printf "%s\n" "usage: wcfg --l ip 127.0.0.1"
+	printf "%s\n" "usage: wcfg --lock user username"
+
+	printf "\n%s\n" "usage: wcfg --lock-enable ip 127.0.0.1"
+	printf "%s\n" "usage: wcfg -le user username"
+
+	printf "\n%s\n" "usage: wcfg --lock-disable ip 127.0.0.1"
+	printf "%s\n" "usage: wcfg --ld user username"
 }
 
+
+# Check if the user is in the warden-admin group
 if id -Gn "$USER" | grep -qw "warden-admin"; 
 then
     case "$1" in 
 	
 	"-ls"|"--list-locks")
-		echo "- USER LOCKS -"
+		printf "%s\n" "- USER LOCKS -"
 		while IFS=":" read -r LOCK_SET LOCK_VALUE || [ -n "$LOCK_SET" ];
 		do
 			case "$LOCK_SET" in
@@ -39,8 +44,7 @@ then
     		esac
 		done < "$USR_LOCK"
 		
-		echo
-		echo "- ADDRESS LOCKS -"
+		printf "\n%s" "- ADDRESS LOCKS -"
 		while IFS=":" read LOCK_SET LOCK_VALUE || [ -n "$LOCK_SET" ];
 		do
 			case "$LOCK_SET" in
@@ -66,7 +70,7 @@ then
 			then
 				printf "%s\n" "1:$3" >> $ADR_LOCK
 			else
-				echo "Lock already present"
+				printf "%s\n" "Lock already present"
 			fi
 		;;
 		"user"|"USER")
@@ -74,7 +78,7 @@ then
 			then
 				printf "%s\n" "1:$3" >> $USR_LOCK
 			else
-				echo "Lock already present"
+				printf "%s\n" "Lock already present"
 			fi
 		;;
 		esac
@@ -108,7 +112,7 @@ then
 		then
 			NewPasswordPrompt
 		else
-			echo "Password data unchanged..."
+			printf "%s\n" "Password data unchanged..."
 		fi
 	;;
 
@@ -137,10 +141,10 @@ then
 		"status")
 			if [ -f $SYS_LOCK ];
 			then
-				echo "locked"
+				printf "%s\n" "locked"
 				exit 0
 			else 
-				echo "not locked"
+				printf "%s\n" "not locked"
 				exit 1
 			fi
 		;;
@@ -152,6 +156,6 @@ then
 	;;
 	esac
 else
-    echo "wcfg: Permission Denied"
+    printf "%s\n" "wcfg: Permission Denied"
 	exit 1
 fi

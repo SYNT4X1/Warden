@@ -81,11 +81,10 @@ length () {
 
 }
 
-# =====
-# HOW TO USE
-# =====
 
-# = EXAMPLE ARRAY =
+# USAGE: 
+
+# = EXAMPLE FILLED ARRAY =
 # "element1:element2:element3:"
 
 # = EMPTY ARRAY STRING =

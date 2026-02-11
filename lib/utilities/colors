@@ -1,11 +1,8 @@
 #!/usr/bin/env sh
 
 # DESCRIPTION
-#
-
-# =====
-# COLORS
-# =====
+# A collection of useful ansi escape codes
+# for displaying colors to the tty
 
 RESET_COLOR="\033[0m"
 

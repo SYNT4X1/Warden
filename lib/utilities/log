@@ -1,12 +1,19 @@
 #!/usr/bin/env sh
 
 # DESCRIPTION
-#
+# This libaray function that pushes log data 
+# from $1 to the fifo sink made for the warden
+# logging daemon
 
-log () {
-    if [ -p "/run/warden/wlog/sink" ];
+# FILE CONSTANTS
+LOG_SINK="/run/warden/wlog/sink"
+
+
+# Log the value of $1 to warden logs
+Log () {
+    if [ -p "$LOG_SINK" ];
     then
-        echo "$1" > /run/warden/wlog/sink
+        printf "%s\n" "$1" > "$LOG_SINK"
         return 0
     else
         return 1

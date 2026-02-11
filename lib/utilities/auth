@@ -1,55 +1,66 @@
 #!/usr/bin/env sh
 
 # DESCRIPTION
-#
+# This defines the authentication library for the 
+# Warden shell jail
 
+# LIBRARY IMPORTS
+. /etc/warden/warden.conf
+. /var/lib/warden/utilities/log
+
+# FILE CONSTANTS
 SYS_LOCK="/etc/warden/sys.lock"
 USR_LOCK="/etc/warden/user.lock"
 ADR_LOCK="/etc/warden/addr.lock"
 AUTH_FILE="/etc/warden/auth"
 
-. /etc/warden/warden.conf
-. /var/lib/warden/utilities/log
 
 # Checks if a value provided for a warden lock
 # file contains a separately provided value for
 # locking purposes
 checkLock (){
 
+    # Check the system lock
     if [ -f $SYS_LOCK ]; 
     then
         return 0
     fi
     
+    # Check if user is locked by name
     if [ -f $USR_LOCK ]; 
     then
         while IFS=":" read -r LOCK_SET LOCK_VALUE || [ -n "$LOCK_SET" ];
         do
             if [ "$LOCK_SET" = "1" ] && [ "$LOCK_VALUE" = "$1" ]
             then
-                return 0
+                return 0 # locked (lock found)
             fi
         done < "$USR_LOCK"
     fi
 
-    if [ -f $ADR_LOCK ]; 
+    # Check if the $SSH_CONNECTION env var is set and
+    # check if it's locked by name
+    if [ -f $ADR_LOCK ] && [ -n "$SSH_CONNECTION" ]; 
         then
         while IFS=":" read -r LOCK_SET LOCK_VALUE || [ -n "$LOCK_SET" ];
         do
             if [ "$LOCK_SET" = "1" ] && [ "$LOCK_VALUE" = "$SSH_CONNECTION" ];
             then
-                return 0	
+                return 0
             fi
         done < "$ADR_LOCK"
     fi
 
-    return 1
+    return 1 # not locked
     
 }
 
+
+# Perform a hashed string compare of the 
+# stored password and supplied string
 PasswordAuth () {
 
-    if [ "$(echo $1 | sha256sum)" == "$(cat $AUTH_FILE | grep - )" ]; 
+    if [ "$(printf "%s" "$1" | sha256sum)" == "$(head -n 1 $AUTH_FILE | grep - )" ]; 
     then
         return 0
     else
@@ -57,12 +68,22 @@ PasswordAuth () {
     fi
 }
 
+
+# An initial password prompt for authenticating 
+# changes to the password
 AuthPrompt () {
 
-    for ((try=0;try<PASSWORD_TRYS;try++));
+    try=0
+
+    while [ "$try" -lt "$PASSWORD_TRYS" ];
     do
+
+        try=$((try + 1))
+    
+        stty -echo
         echo -n "Password: "
-        read -s -r password_input; echo
+		read -r password_input; echo
+		stty echo
 
         if PasswordAuth "$password_input"; then
             return 0
@@ -74,11 +95,14 @@ AuthPrompt () {
 
 }
 
+
+# write supplied string to the authencation file
+# and log the event with warden log handler
 UpdatePassword () {
 
-    if echo $newPass | sha256sum > "$AUTH_FILE";
+    if printf "%s" "$newPass" | sha256sum > "$AUTH_FILE";
     then
-        log "[PASS][$(date -u +"%Y%m%d-%H:%M:%S")] Password for breakout command has been updated"
+        Log "[PASS][$(date -u +"%Y%m%d-%H:%M:%S")] Password for breakout command has been updated"
         return 0
     else
         return 1
@@ -86,16 +110,21 @@ UpdatePassword () {
 
 }
 
+
+# Prompt used to create a new password
+# performs a few validation checks for QOL
 NewPasswordPrompt () {
 
     passwordUpdated=false
 
     while ! $passwordUpdated;
     do
-        echo -n "New Password: "
+        stty -echo
+        printf "%s" "New Password: "
         read -s -r newPass; echo
-        echo -n "Confirm Password: "
+        printf "%s" "Confirm Password: "
         read -s -r confPass; echo
+        stty echo
         
         if [ "$newPass" == "$confPass" ]; then
             if UpdatePassword $newPass; then

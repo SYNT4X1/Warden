@@ -1,19 +1,23 @@
 #!/usr/bin/env sh
 
-. ./lib/utilities/colors
+# LIBRARY IMPORTS
+. ./lib/utilities/colors  # Both are used to make the installer pretty
 . ./lib/utilities/print
 
+# FILE DEFINED CONSTANTS
 AUTH_FILE="/etc/warden/auth"
 
+
+# Install the Warden files and configurations
 InstallWarden () {
     
-    echo
+    printf "\n"
     print "${YELLOW}[-] INSTALL A SERVICE ACCOUNT"
     print "${RED}[ ] CREATE FILES/DIRECTORIES"
     print "${RED}[ ] INSTALL WARDEN FILES"
     print "${RED}[ ] START SERVICES"
     print "${RED}[ ] CLEANUP"
-    echo "[0/5][-----]"
+    printf "%s\n" "[0/5][-----]"
 
     # INSTALLATION STEP 1 -> SERVICE ACCOUNT
     # Generate a service account for Blueshell 
@@ -30,14 +34,14 @@ InstallWarden () {
         return 1
     fi
 
-    echo
+    printf "\n"
     printf "\e[6A\e[J"
     print "${GREEN}[✓] INSTALL A SERVICE ACCOUNT"
     print "${YELLOW}[-] CREATE FILES/DIRECTORIES"
     print "${RED}[ ] INSTALL WARDEN"
     print "${RED}[ ] START SERVICES"
     print "${RED}[ ] CLEANUP"
-    echo -n "[1/5][=----]"
+    printf "%s" -n "[1/5][=----]"
     
 
     # ==========
@@ -84,7 +88,7 @@ InstallWarden () {
     print "${YELLOW}[-] INSTALL WARDEN"
     print "${RED}[ ] START SERVICES"
     print "${RED}[ ] CLEANUP"
-    echo -n "[2/5][==---]"
+    printf "%s""[2/5][==---]"
 
     # ==========
 
@@ -113,6 +117,7 @@ InstallWarden () {
     
     # ADD WSH TO VALID SHELLS
     printf "%s\n" "/bin/wsh" | tee -a /etc/shells
+    printf "%s\n" "/usr/bin/wsh" | tee -a /etc/shells
 
     printf "\e[6A\e[J"
     print "${GREEN}[✓] INSTALL A SERVICE ACCOUNT"
@@ -120,7 +125,7 @@ InstallWarden () {
     print "${GREEN}[✓] INSTALL WARDEN"
     print "${YELLOW}[-] START SERVICES"
     print "${RED}[ ] CLEANUP"
-    echo -n "[3/5][===--]"
+    printf "%s" "[3/5][===--]"
     
     # ==========
 
@@ -135,7 +140,7 @@ InstallWarden () {
     print "${GREEN}[✓] INSTALL WARDEN"
     print "${GREEN}[✓] START SERVICES"
     print "${YELLOW}[-] CLEANUP"
-    echo -n "[4/5][====-]"
+    printf "%s" "[4/5][====-]"
 
 
     # ==========
@@ -150,11 +155,13 @@ InstallWarden () {
     print "${GREEN}[✓] INSTALL WARDEN"
     print "${GREEN}[✓] START SERVICES"
     print "${GREEN}[✓] CLEANUP"
-    echo "[5/5][=====]"
-    echo
+    printf "%s\n" "[5/5][=====]"
+    printf "\n"
 
 }
 
+
+# Removes all install paths and file modifications from the system
 RemoveWarden () {
 
     rm -rf /etc/systemd/system/wlog.service
@@ -177,61 +184,72 @@ RemoveWarden () {
     rm -rf /usr/bin/wcfg
     
     sed -i '\|/bin/wsh|d' /etc/shells
+    sed -i '\|/usr/bin/wsh|d' /etc/shells
 
 }
 
+
+# The function call for the initial password setup
+# for configuration and breakout
 PasswordSetup () {
 
-    echo -n "New Password: "
-    read -s -r newPass; echo 
-    echo -n "Confirm Password: "
-    read -s -r confPass ; echo
+    
+    stty -echo
+    printf "%s" "New Password: "
+    read -r newPass; printf "\n"
+
+    printf "%s" "Confirm Password: "
+    read -r confPass ; printf "\n"
+    stty echo
+    
     if [ $newPass == $confPass ]; then
-        echo $newPass | sha256sum > /etc/warden/auth
-        echo "Password Setup"
+        printf "%s" "$newPass" | sha256sum > "$AUTH_FILE"
+        printf "%s\n" "Password Setup"
     else
-        echo "Passwords do not match"
+        printf "%s\n" "Passwords do not match"
         PasswordSetup
     fi
 }
 
 
-
+# Check if user is root
 if (( $EUID != 0 )); 
 then
-    printWarning "This installer requires root privileges"
+    printf "%s\n" "Permission denied: This installer requires root privileges"
 else
     cat ./.install/InstallBanner
-    echo
-    if [ -e "/bin/wsh" ] || 
+    printf "\n"
+
+    # check if there exists traces of the tooling
+    if [ -e "/usr/bin/wsh" ] ||
+       [ -e "/usr/bin/wcfg" ] ||
+       [ -e "/usr/bin/wlog" ] || 
        getent passwd warden > /dev/null 2>&1; 
     then
         read -p "Would you like to remove Warden from your system? (Y/N): " input
-        case $input in
+        case "$input" in
             [Yy]*)
                 if RemoveWarden;
                 then 
-                    echo "Warden removed successfully from your system!"
+                    printf "%s\n"  "Warden removed successfully from your system!"
+                    exit 0
                 fi
             ;;
             [Nn]*)
-                echo "Goodbye!"
+                printf "%s\n" "Goodbye!"
+                exit 0
             ;;
         esac
 
     else
         read -p "Would you like to install Warden? (Y/N): " input
-        case $input in
+        case "$input" in
             [Yy]* )
                 if InstallWarden;
                 then 
-                    echo "Please Create a password for the shell breakout"
+                    printf "%s\n" "Please Create a password for the shell breakout"
                     if PasswordSetup;
                     then
-
-                        set -a
-                        source /etc/environment
-                        set +a
 
                         # FIX - NOT FINAL
                         # Fixes permission issues -> contrain to warden-admin group
@@ -239,17 +257,19 @@ else
                         chmod -R 775 /etc/warden
                         chmod -R 755 /var/lib/warden
 
-                        echo -e "\nWARDEN has been installed successfully!"
-                        echo -e "\nFor more information, please visit:"
-                        echo "  https://github.com/SYNT4X1/warden.git"
+                        printf "\n%s\n" "WARDEN has been installed successfully!"
+                        printf "\n%s\n" "For more information, please visit:"
+                        printf "%s\n" "  https://github.com/SYNT4X1/Warden.git"
+                        exit 0
                     fi
                 else
                     RemoveWarden
-                    exit 1
+                    exit 0
                 fi
             ;;
             [Nn]* )
-                echo "Goodbye!"
+                printf "%s\n" "Goodbye!"
+                exit 0
             ;;
         esac
     fi

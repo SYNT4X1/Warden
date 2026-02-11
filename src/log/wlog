@@ -6,11 +6,15 @@ FIFO="/run/warden/wlog/sink"
 
 help () {
     cat "/var/lib/warden/banners/wlog.banner"
+
+    exit 0
 }
 
 usage () {
-    echo "usage: wlog -d"
-    echo "usage: wlog --dump"
+    printf "%s\n" "usage: wlog -d"
+    printf "%s\n" "usage: wlog --dump"
+
+    exit 0
 }
 
 RunDaemon () {
@@ -27,10 +31,11 @@ RunDaemon () {
     while true; do
         while read -r line <&3;
         do
-            echo "$line" >> "$LOG_PATH/$LOG_FILE"
+            printf "%s\n" "$line" >> "$LOG_PATH/$LOG_FILE"
         done
     done
 
+    exit 0
 
 }
 
@@ -39,7 +44,7 @@ then
 
     if [ "$USER" != "warden" ];
     then
-        echo "wlog: Permission Denied"
+        printf "%s\n" "wlog: Permission Denied"
         exit 1
     else
         continue
@@ -60,7 +65,8 @@ then
 
             if ! cat "$LOG_PATH/$LOG_FILE" 2> /dev/null;
             then
-                echo "wlog: Permission Denied"
+                printf "%s\n" "wlog: Permission Denied"
+                exit 1
             fi
             exit 0
         ;;
@@ -74,7 +80,8 @@ then
         ;;
         esac
     else
-        echo "wlog: Permission Denied"
+        printf "%s\n" "wlog: Permission Denied"
+        exit 1
     fi
 
 fi

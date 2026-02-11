@@ -1,24 +1,13 @@
 #!/usr/bin/env sh
 
 # DESCRIPTION
-#
+# a simple print command used to clean up code and allow 
+# the printed of formatted colored text to the tty
 
-# Glorified Echo, this just prevents the headache of having to reset the color all the time
+# USAGE (single color): print "${<COLOR>}<TEXT>"
+
+# USAGE (multi color): print "${<COLOR1>}<TEXT1> ${<COLOR2>}<TEXT2>"
+
 print () { 
-    echo -e "$1 ${RESET_COLOR}" 
-}
-
-# print for critical security errors, these are things that need to be fixed
-printCritical () { 
-    echo -e "${RED}[x][CRITICAL]${RESET_COLOR} $1 ${RESET_COLOR}" 
-}
-
-# print for basic warning, these are things that should be fixed
-printWarning () { 
-    echo -e "${YELLOW}[*][WARNING]${RESET_COLOR} $1 ${RESET_COLOR}" 
-}
-
-# print for saying things are okay
-printSecure () { 
-    echo -e "${GREEN}[✓][SECURE]${RESET_COLOR} $1 ${RESET_COLOR}" 
+    printf "%s\n" "$1 ${RESET_COLOR}" 
 }
