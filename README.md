@@ -16,8 +16,8 @@ Copyright (c) 2026 Damien Santiago
 - [About](#-about)
 - [Installation](#-installation)
 - [Basic Usage](#-basic-usage)
+- [Tips](#-tips)
 - [Documentation](#-documentation)
-- 
 - [License](#-license)
 
 ## About
@@ -58,7 +58,7 @@ Match User *
   ForceCommand /usr/bin/wsh
 ```
 
-Your ssh config will force dump authenticated users into the warden shell environment. Conversely, this
+Your ssh config will force dump authenticated users into the warden shell environment. Additionally, this
 should also prevent attackers from using the -t ssh flag to obtain a different shell than defined in the /etc/passwd
 file 
 
